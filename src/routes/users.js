@@ -8,7 +8,11 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../models/index');
 const { devlog, deverr } = require('../util/devlog');
-const { detect_body_xss, sanitize_body } = require('../util/xss_util');
+const {
+    detect_authorization_xss,
+    detect_body_xss,
+    sanitize_body
+} = require('../util/xss_util');
 const role = require('../util/role');
 
 const BCRYPT_SALT_ITERATIONS = parseInt(process.env.SALT_ITERATIONS) || 10;
@@ -115,7 +119,7 @@ router.post('/auth', detect_body_xss, sanitize_body, async (req, res, next) => {
 
         // Recupera contraseña desde mysql
         const user = await db.User.findOne({
-            attributes: [ 'id', 'password_hash', 'role' ],
+            attributes: [ 'id', 'password_hash', 'role', 'username' ],
             where: {
                 username: username
             }
