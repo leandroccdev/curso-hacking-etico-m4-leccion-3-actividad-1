@@ -83,7 +83,7 @@ router.post('/register', detect_body_xss, sanitize_body, async (req, res, next) 
         });
     } catch (err) {
         deverr(err);
-        return next(create_error(400, "The request couldn't be processed."));
+        return next(create_error(500, "The request couldn't be processed."));
     }
 });
 
@@ -228,7 +228,7 @@ router.get(
             res.status(204).json();
         } catch (err) {
             deverr(err);
-            return next(create_error(400, "The request couldn't be processed."));
+            return next(create_error(500, "The request couldn't be processed."));
         }
     }
 );
