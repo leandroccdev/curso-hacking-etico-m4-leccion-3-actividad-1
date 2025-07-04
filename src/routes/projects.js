@@ -15,7 +15,7 @@ const {
     detect_body_xss,
     sanitize_body
 } = require('../util/xss_util');
-const role_status = require('../util/role');
+const user_roles = require('../util/role');
 const project_status = require('../util/project');
 const {
     auth_verify,
@@ -29,7 +29,7 @@ const {
 router.get(
     '/status',
     auth_verify,
-    async (req, res, next) => {
+    (req, res, next) => {
         return res.status(200).json({
             project: {
                 status: project_status
@@ -58,9 +58,10 @@ router.post(
     detect_body_xss,
     auth_verify,
     required_role([
-        role_status.administrator,
-        role_status.editor
+        user_roles.administrator,
+        user_roles.editor
     ]),
+    sanitize_body,
     async (req, res, next) => {
         let { title, description } = req.body;
 
@@ -106,6 +107,34 @@ router.post(
                 owner: project.owner
             }
         });
+    }
+);
+
+/**
+ * Permite actualizar un proyecto
+ * 
+ * Objeto esperado:
+ * {
+ *      "id": integer,
+ *      "title": string,
+ *      "description": string,
+ *      status: integer
+ * }
+ */
+router.put(
+    '/',
+    auth_verify,
+    required_role([
+        user_roles.administrator,
+        user_roles.editor
+    ]),
+    async (req, res, next) => {
+        let {id, title, description, status}
+        
+        // Obtiene el token decodificado
+        const decoded_token = get_decoded_token(req.headers?.authorization);
+
+        
     }
 );
 

@@ -5,9 +5,13 @@ const escape_html = require('escape-html');
  * Middleware para detectar XSS usando escape_html
  */
 function detect_body_xss(req, res, next) {
-    for (const k of Object.keys(req.body))
-        if (escape_html(req.body[k]) !== req.body[k])
+    for (const k of Object.keys(req.body)) {
+        const escaped_field = escape_html(req.body[k]);
+        const field = req.body[k].toString();
+
+        if (escaped_field !== field)
             return next(create_error(400, "The request couldn't be processed."))
+    }
     next();
 }
 
