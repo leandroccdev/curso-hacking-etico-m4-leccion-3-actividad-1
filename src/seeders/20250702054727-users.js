@@ -25,7 +25,7 @@ module.exports = {
                 {
                     username: "user",
                     // 2025#he048
-                    password_hash: "$2b$10$8W2GbZXMfek67dkjV8SRzu0GXTnY8LBiv0nwhgQ/cvXjHw9T6ayCS",
+                    password_hash: "$2b$10$PtMOtSrbC2WKGxv0WS/3e.o2WJb5QYYTjP4EvRyfGGFX5rQ8VAIsm",
                     role: 3,
                     createdAt: new Date(),
                     updatedAt: new Date()
