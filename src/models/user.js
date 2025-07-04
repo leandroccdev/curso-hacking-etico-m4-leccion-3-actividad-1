@@ -21,6 +21,14 @@ module.exports = (sequelize, DataTypes) => {
                     as: 'userRole'
                 }
             );
+            // Tiene muchos proyectos
+            this.hasMany(
+                models.Project,
+                {
+                    foreignKey: 'owner',
+                    as: 'projects'
+                }
+            );
         }
     }
     User.init({
