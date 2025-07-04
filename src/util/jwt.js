@@ -96,7 +96,7 @@ function parse_token(authorization) {
     if (!authorization)
         return false;
 
-    const token_match = authorization.match(/bearer ([a-zA-Z0-9_\-\.]*\.[a-zA-Z0-9_\-\.]*\.[a-zA-Z0-9_\-\.]*)/);
+    const token_match = authorization.match(/bearer ([a-z0-9_\-\.]*\.[a-z0-9_\-\.]*\.[a-z0-9_\-\.]*)/i);
     // No se puedo parsear el header
     if (!token_match)
         return false;
