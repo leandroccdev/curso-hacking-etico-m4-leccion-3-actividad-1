@@ -13,21 +13,35 @@ module.exports = (sequelize, DataTypes) => {
                     as: 'session'
                 }
             );
+            // Tiene un rol
+            this.belongsTo(
+                models.UserRole,
+                {
+                    foreignKey: 'role',
+                    as: 'userRole'
+                }
+            );
         }
     }
     User.init({
-        name: {
+        username: {
             allowNull: false,
             type: DataTypes.STRING(40)
         },
-        password: {
+        password_hash: {
             allowNull: false,
             type: DataTypes.STRING(60)
         },
         role: {
             allowNull: false,
             defaultValue: 'user',
-            type: DataTypes.ENUM('administrator', 'editor', 'user')
+            /**
+                 * Roles:
+                 * 1: administrador
+                 * 2: editor
+                 * 3: usuario común
+                 */
+            type: DataTypes.TINYINT.UNSIGNED
         }
     }, {
         sequelize,

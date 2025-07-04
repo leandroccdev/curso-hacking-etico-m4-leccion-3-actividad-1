@@ -9,18 +9,24 @@ module.exports = {
                 primaryKey: true,
                 type: Sequelize.INTEGER
             },
-            name: {
+            username: {
                 allowNull: false,
                 type: Sequelize.STRING(40)
             },
-            password: {
+            password_hash: {
                 allowNull: false,
                 type: Sequelize.STRING(60)
             },
             role: {
                 allowNull: false,
-                defaultValue: 'user',
-                type: Sequelize.ENUM('administrator', 'editor', 'user')
+                defaultValue: 3,
+                /**
+                 * Roles:
+                 * 1: administrador
+                 * 2: editor
+                 * 3: usuario común
+                 */
+                type: Sequelize.TINYINT.UNSIGNED
             },
             createdAt: {
                 allowNull: false,

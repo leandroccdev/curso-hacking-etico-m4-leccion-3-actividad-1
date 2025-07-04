@@ -7,26 +7,26 @@ module.exports = {
             'user',
             [
                 {
-                    name: "admin",
+                    username: "admin",
                     // 2025#he048
-                    password: '$2b$10$Livu/kVASTP00Nt.vdX4mudgykvjGtqxBn/IM9snx.8hBFHicQibi',
-                    role: 'administrator',
+                    password_hash: '$2b$10$Livu/kVASTP00Nt.vdX4mudgykvjGtqxBn/IM9snx.8hBFHicQibi',
+                    role: 1,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 },
                 {
-                    name: "editor",
+                    username: "editor",
                     // 2025#he048
-                    password: '$2b$10$DCIteqf.4pDxsyi3rLE20.XKt/kk96.5NQkVgk2PJBqMp9fJ7klSe',
-                    role: 'editor',
+                    password_hash: '$2b$10$DCIteqf.4pDxsyi3rLE20.XKt/kk96.5NQkVgk2PJBqMp9fJ7klSe',
+                    role: 2,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 },
                 {
-                    name: "user",
+                    username: "user",
                     // 2025#he048
-                    password: "$2b$10$8W2GbZXMfek67dkjV8SRzu0GXTnY8LBiv0nwhgQ/cvXjHw9T6ayCS",
-                    role: 'user',
+                    password_hash: "$2b$10$8W2GbZXMfek67dkjV8SRzu0GXTnY8LBiv0nwhgQ/cvXjHw9T6ayCS",
+                    role: 3,
                     createdAt: new Date(),
                     updatedAt: new Date()
                 }
