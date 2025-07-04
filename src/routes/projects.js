@@ -24,6 +24,21 @@ const {
 } = require('../util/jwt');
 
 /**
+ * Lista los estados posibles para un proyecto.
+ */
+router.get(
+    '/status',
+    auth_verify,
+    async (req, res, next) => {
+        return res.status(200).json({
+            project: {
+                status: project_status
+            }
+        });
+    }
+);
+
+/**
  * Permite crear un proyecto.
  * 
  * Rol requerido: administrador, editor
