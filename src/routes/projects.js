@@ -40,6 +40,67 @@ router.get(
 );
 
 /**
+ * Lista todos los proyectos a los que el usuario tiene acceso.
+ */
+router.get(
+    '/',
+    auth_verify,
+    required_role([
+        user_roles.administrator,
+        user_roles.editor
+    ]),
+    async (req, res, next) => {
+        try {
+            // Decodifica el token
+            const decoded_token = get_decoded_token(req.headers.authorization);
+
+            // Consulta el id del usuario
+            const user = await db.User.findOne({
+                where: {
+                    username:decoded_token.username
+                }
+            });
+            // No se encontró el usuario
+            if (!user)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            let projects = null;
+            // Consulta todos los proyectos en la bd
+            if (user.role == user_roles.administrator) {
+                devlog('Listing as admin');
+                projects = await db.Project.findAll({
+                    attributes: ['id', 'title', 'description', 'userOwner', 'status'],
+                    where: {
+                        isDeleted: false
+                    }
+                });
+            }
+            // Consultar solo los proyectos del usuario activo
+            else {
+                devlog('Listing as other user');
+                projects = await db.Project.findAll({
+                    attributes: ['id', 'title', 'description', 'userOwner', 'status'],
+                    where: {
+                        userOwner: user.id,
+                        isDeleted: false
+                    }
+                });
+            }
+
+            // No se pudieron obtener los proyectos
+            if (!projects)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            return res.status(200).json({
+                projects: projects
+            });
+        } catch (err) {
+            next(create_error(err.status, err.message));
+        }
+    }
+);
+
+/**
  * Permite crear un proyecto.
  * 
  * Rol requerido: administrador, editor
@@ -64,50 +125,54 @@ router.post(
     ]),
     sanitize_body,
     async (req, res, next) => {
-        let { title, description } = req.body;
+        try {
+            let { title, description } = req.body;
 
-        // Campos vacíos
-        if (!title || !description)
-            return next(create_error(400, 'All fields are required.'));
+            // Campos vacíos
+            if (!title || !description)
+                return next(create_error(400, 'All fields are required.'));
 
-        // Sanitizado de campos
-        title = escape_html(title);
-        description = escape_html(description);
+            // Sanitizado de campos
+            title = escape_html(title);
+            description = escape_html(description);
 
-        // Decodifica el token para obtener el usuario
-        const decoded_token = get_decoded_token(req.headers?.authorization);
+            // Decodifica el token para obtener el usuario
+            const decoded_token = get_decoded_token(req.headers?.authorization);
 
-        // Obtiene el usuario
-        const user = await db.User.findOne({
-            where: {
-                username: decoded_token.username
-            }
-        });
-        // No se encontró el usuario
-        if (!user)
-            return next(create_error(500, "The request couldn't be processed."))
+            // Obtiene el usuario
+            const user = await db.User.findOne({
+                where: {
+                    username: decoded_token.username
+                }
+            });
+            // No se encontró el usuario
+            if (!user)
+                return next(create_error(500, "The request couldn't be processed."))
 
-        // Crear nuevo proyecto
-        const project = await db.Project.create({
-            title: title,
-            description: description,
-            userOwner: user.id,
-            status: project_status.proposal
-        });
-        // No se pudo crear el proyecto
-        if (!project)
-            return next(create_error(500, "The request couldn't be processed."));
+            // Crear nuevo proyecto
+            const project = await db.Project.create({
+                title: title,
+                description: description,
+                userOwner: user.id,
+                status: project_status.proposal
+            });
+            // No se pudo crear el proyecto
+            if (!project)
+                return next(create_error(500, "The request couldn't be processed."));
 
-        // Proyecto creado
-        return res.status(200).json({
-            project: {
-                id: project.id,
-                title: project.title,
-                description: project.description,
-                status: project.status,
-                owner: project.owner
-            }
-        });
+            // Proyecto creado
+            return res.status(200).json({
+                project: {
+                    id: project.id,
+                    title: project.title,
+                    description: project.description,
+                    status: project.status,
+                    owner: project.owner
+                }
+            });
+        } catch (err) {
+            next(create_error(err.status, err.message));
+        }
     }
 );
 
@@ -179,7 +244,7 @@ router.delete(
 
         // Detectar XSS
         if (escape_html(id) !== id)
-            return next(create_error(400, "The request couldn't be processed."));
+            return next(create_error(500, "The request couldn't be processed."));
 
         // Sanitizar id
         id = escape_html(id);
