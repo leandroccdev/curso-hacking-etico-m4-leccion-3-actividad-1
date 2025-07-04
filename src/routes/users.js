@@ -112,7 +112,7 @@ router.post('/auth', detect_xss, sanitize_body, async (req, res, next) => {
 
         // Recupera contraseña desde mysql
         const user = await db.User.findOne({
-            attributes: [ 'id', 'password_hash' ],
+            attributes: [ 'id', 'password_hash', 'role' ],
             where: {
                 username: username
             }
@@ -160,13 +160,14 @@ router.post('/auth', detect_xss, sanitize_body, async (req, res, next) => {
         // Calcula el tiempo de exp del token jwt
         const expires_in = decoded_token.exp - Math.floor(Date.now() / 1000);
 
-        return res.status(201).json({
+        return res.status(200).json({
             auth_token: {
                 token: token,
                 expires_in: expires_in
             },
             user: {
-                username: username
+                username: username,
+                role: decoded_token.role
             }
         });
     } catch (err) {
