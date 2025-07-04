@@ -17,6 +17,7 @@ const {
 } = require('../util/xss_util');
 const user_roles = require('../util/role');
 const project_status = require('../util/project');
+const task_status = require('../util/task');
 const {
     auth_verify,
     get_decoded_token,
@@ -159,6 +160,59 @@ router.put(
         } catch (err) {
             next(create_error(err.status, err.message));
         }
+    }
+);
+
+/**
+ * Gestiona la eliminación de proyectos.
+ * 
+ * Nota: solo para administradores.
+ */
+router.delete(
+    '/:id',
+    auth_verify,
+    required_role([
+        user_roles.administrator
+    ]),
+    async (req, res, next) => {
+        let id = req.params.id;
+
+        // Detectar XSS
+        if (escape_html(id) !== id)
+            return next(create_error(400, "The request couldn't be processed."));
+
+        // Sanitizar id
+        id = escape_html(id);
+
+        // Verificar si el proyecto existe
+        const project = await db.Project.findByPk(id, {
+            where: {
+                isDeleted: false
+            }
+        });
+        // No existe
+        if (!project)
+            return next(create_error(404, 'Resource not found'));
+
+        // Verificar si tienes tareas no cerradas
+        const tasks = await db.Task.findAll({
+            where: {
+                projectId: id,
+                isDeleted: false,
+                status: {
+                    [Op.ne]: task_status.closed,
+                    [Op.ne]: task_status.cancelled
+                }
+            }
+        });
+        // Existen tareas activas en el proyecto
+        if (tasks.length > 0)
+            return next(create_error(409, 'Cannot delete a project with active tasks.'))
+
+        // Realiza la eliminación
+        await project.destroy();
+
+        res.status(204).send();
     }
 );
 
