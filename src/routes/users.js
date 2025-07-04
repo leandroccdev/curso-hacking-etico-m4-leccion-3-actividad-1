@@ -8,7 +8,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../models/index');
 const { devlog, deverr } = require('../util/devlog');
-const { detect_xss, sanitize_body } = require('../util/xss_util');
+const { detect_body_xss, sanitize_body } = require('../util/xss_util');
 const role = require('../util/role');
 
 const BCRYPT_SALT_ITERATIONS = parseInt(process.env.SALT_ITERATIONS) || 10;
@@ -27,7 +27,7 @@ const IS_DEV = process.env.NODE_ENV === 'development';
  *      "password": ""
  * }
  */
-router.post('/register', detect_xss, sanitize_body, async (req, res, next) => {
+router.post('/register', detect_body_xss, sanitize_body, async (req, res, next) => {
     let { username, password } = req.body;
 
     // No se recibieron los campos
@@ -87,7 +87,7 @@ router.post('/register', detect_xss, sanitize_body, async (req, res, next) => {
  *      "password": ""
  * }
  */
-router.post('/auth', detect_xss, sanitize_body, async (req, res, next) => {
+router.post('/auth', detect_body_xss, sanitize_body, async (req, res, next) => {
         let { username, password } = req.body;
 
     // No se recibieron los campos
