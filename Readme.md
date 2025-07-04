@@ -147,12 +147,3 @@ Inicia la aplicación en modo productivo: `npm start`
 
 #### Iniciar dev server
 Inicia la aplicación en modo desarrollo: `npm run dev`
-
-#### Tailwindcss
-
-##### Carga dinámica de colores en widgets
-No ejecutar `npm run tailwind:build` ni `npm run tailwind:watch`.
-Los colores de los widgets se cargan de manera dinámica, desde nodejs tailwindcss no podrá leer los colores que aún no existen en las vistas de pugjs. **Debido a ésto, el estudiante optó por incluir el componente desde el CDN oficial.**
-
-#### Cambiar el color de los widgets
-Para cambiar el color de los widgets se debe modificar la propiedad la propiedad `TW_WIDGET_COLOR` del archivo `src/.env`, y luego reiniciar el servidor node.
