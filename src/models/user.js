@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
             this.hasMany(
                 models.Project,
                 {
-                    foreignKey: 'owner',
+                    foreignKey: 'userOwner',
                     as: 'projects'
                 }
             );

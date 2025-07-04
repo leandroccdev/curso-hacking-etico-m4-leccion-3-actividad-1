@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
             this.belongsTo(
                 models.User,
                 {
-                    foreignKey: 'author',
+                    foreignKey: 'userAuthor',
                     as: 'author'
                 }
             );
@@ -25,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
             this.hasOne(
                 models.User,
                 {
-                    foreignKey: 'executor',
+                    foreignKey: 'userExecutor',
                     as: 'executor'
                 }
             );
@@ -49,11 +49,11 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
             type: DataTypes.INTEGER
         },
-        author: {
+        userAuthor: {
             allowNull: false,
             type: DataTypes.INTEGER
         },
-        executor: {
+        userExecutor: {
             allowNull: false,
             type: DataTypes.INTEGER
         },

@@ -18,7 +18,7 @@ module.exports = {
                 type: Sequelize.STRING(100)
             },
             // id del usuario quien crea el proyecto
-            owner: {
+            userOwner: {
                 allowNull: false,
                 type: Sequelize.INTEGER
             },

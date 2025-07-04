@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
 			this.belongsTo(
 				models.User,
 				{
-					foreignKey: 'owner',
+					foreignKey: 'userOwner',
 					as: 'owner'
 				}
 			);
@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
 			allowNull: false,
 			type: DataTypes.STRING(100)
 		},
-		owner: {
+		userOwner: {
 			allowNull: false,
 			type: DataTypes.INTEGER
 		},

@@ -9,7 +9,7 @@ module.exports = {
                 {
                     title: "Proyecto ejemplo",
                     description: "Este es un proyecto de ejemplo",
-                    owner: 1,
+                    userOwner: 1,
                     status: 3, // aproved
                     createdAt: new Date(),
                     updatedAt: new Date()
@@ -17,7 +17,7 @@ module.exports = {
                 {
                     title: "Lección 3 - Modulo 4",
                     description: "Representa la lección 3 del modulo 4 de hacking ético",
-                    owner: 1,
+                    userOwner: 1,
                     status: 4, // in progress
                     createdAt: new Date(),
                     updatedAt: new Date()

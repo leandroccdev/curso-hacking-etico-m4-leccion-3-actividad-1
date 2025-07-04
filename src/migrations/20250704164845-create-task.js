@@ -30,12 +30,12 @@ module.exports = {
                 type: Sequelize.INTEGER
             },
             // Usuario quien crea la tarea
-            author: {
+            userAuthor: {
                 allowNull: false,
                 type: Sequelize.INTEGER
             },
             // Usuario quien desarrolla la tarea
-            executor: {
+            userExecutor: {
                 allowNull: false,
                 type: Sequelize.INTEGER
             },
