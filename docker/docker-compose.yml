@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:9.3.0
+    container_name: api-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    env_file:
+      - ./mysql.env
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      api:
+        ipv4_address: 172.20.0.2
+
+volumes:
+  db_data:
+
+networks:
+  api:
+    driver: bridge
+    ipam:
+      config:
+        # Some network details
+        # netmask: 255.255.255.248 (CIDR /29)
+        # hosts: 8
+        # IPs: 6
+        # net:       172.20.0.0
+        # range:     172.20.0.1~6
+        # broadcast: 172.20.0.7
+        - subnet: "172.20.0.0/29"
+          gateway: "172.20.0.1"

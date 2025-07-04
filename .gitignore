@@ -1,0 +1,4 @@
+src/node_modules/*
+docker/mysql.env
+src/.env
+src/config/config.json

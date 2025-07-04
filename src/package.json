@@ -1,0 +1,33 @@
+{
+  "author": "Federico Leandro Cañellas",
+  "email": "federico.leandro.c@gmail.com",
+  "name": "app",
+  "description": "Entrega módulo 4 lección 3: actividad 1 portafolio.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+     "start": "NODE_ENV=production node ./bin/www",
+      "dev": "NODE_ENV=development DEBUG=app:* nodemon ./bin/www"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "dotenv": "^17.0.0",
+    "express": "~4.16.1",
+    "express-session": "^1.18.1",
+    "http-errors": "~1.6.3",
+    "jade": "~1.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "lusca": "^1.7.0",
+    "morgan": "~1.9.1",
+    "mysql2": "^3.14.1",
+    "nodemon": "~3.1.10",
+    "sequelize": "^6.37.7",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.6.3"
+  }
+}
