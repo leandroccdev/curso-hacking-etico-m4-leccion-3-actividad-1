@@ -31,13 +31,16 @@ router.post('/register', detect_xss, sanitize_body, async (req, res, next) => {
     let { username, password } = req.body;
 
     // No se recibieron los campos
-    if (!username || !password) {
+    if (!username || !password)
         return next(create_error(400, 'All fields are required.'));
-    }
 
     // Sanitizado
     username = escape_html(username);
     password = escape_html(password);
+
+    // Valida largo de contraseña
+    if (PASSWORD_MIN_LENGTH > password.length)
+        return next(create_error(400, `Password must be at least ${PASSWORD_MIN_LENGTH} characters long.`));
 
     try {
         // Generación de contraseña
