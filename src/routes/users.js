@@ -4,16 +4,22 @@ const bcrypt = require('bcrypt');
 const create_error = require('http-errors');
 const escape_html = require('escape-html');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../models/index');
 const { devlog, deverr } = require('../util/devlog');
+const { get_now } = require('../util/datetime');
 const {
     detect_authorization_xss,
     detect_body_xss,
     sanitize_body
 } = require('../util/xss_util');
 const role = require('../util/role');
+const {
+    auth_verify,
+    get_decoded_token
+} = require('../util/jwt');
 
 const BCRYPT_SALT_ITERATIONS = parseInt(process.env.SALT_ITERATIONS) || 10;
 const PASSWORD_MIN_LENGTH = parseInt(process.env.PASSWORD_MIN_LENGTH);
@@ -182,5 +188,49 @@ router.post('/auth', detect_body_xss, sanitize_body, async (req, res, next) => {
         return next(auth_err);
     }
 });
+
+/**
+ * Permite cerrar la sesión de un usuario.e
+ * 
+ * Nota: No recibe un cuerpo JSON.
+ * 
+ * Cabeceras esperadas:
+ * - Authorization: bearer JWT token
+ */
+router.get(
+    '/logout',
+    detect_authorization_xss,
+    auth_verify,
+    async (req, res, next) => {
+        try {
+            // nota: auth_verify se encarga del resto, si llega acá es porque debe
+
+            // Decodifica el token
+            const decoded_token = get_decoded_token(req.headers?.authorization);
+
+            // Busca la sesión del usuario para desactivarla
+            const user_session = await db.Session.findOne({
+                where: {
+                    sessionId: decoded_token.session_id,
+                    active: true,
+                    expireAt: {
+                        [Op.gt]: get_now()
+                    }
+                }
+            });
+
+            // Desactiva la sesión
+            user_session.active = false;
+            user_session.expireAt = 0;
+            user_session.save();
+
+            // Logout exitoso
+            res.status(204).json();
+        } catch (err) {
+            deverr(err);
+            return next(create_error(400, "The request couldn't be processed."));
+        }
+    }
+);
 
 module.exports = router;
