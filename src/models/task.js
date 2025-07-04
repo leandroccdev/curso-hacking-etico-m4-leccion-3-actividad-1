@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
         static associate(models) {
             // Pertenece a un proyecto
             this.belongsTo(
-                models.Task,
+                models.Project,
                 {
                     foreignKey: 'projectId',
                     as: 'project'
@@ -21,8 +21,8 @@ module.exports = (sequelize, DataTypes) => {
                     as: 'author'
                 }
             );
-            // Tiene un trabajador
-            this.hasOne(
+            // Pertenece a un trabajador
+            this.belongsTo(
                 models.User,
                 {
                     foreignKey: 'userExecutor',

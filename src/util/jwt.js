@@ -73,6 +73,20 @@ function decode(token) {
 }
 
 /**
+ * Parsea y decodifica el token desde el header Authorization
+ * Si el proceso falla, el error deberá ser proesado externamente
+ * @param {string} authorization 
+ * @returns el token decodificado o false
+ */
+function get_decoded_token(authorization) {
+    const token = parse_token(authorization);
+    if (!token)
+        return false;
+
+    return decode(token);
+}
+
+/**
  * Parsea el jwt token desde el header Authorization
  * @param {string} authorization Header Authorization
  * @returns jwt token o false
@@ -91,22 +105,23 @@ function parse_token(authorization) {
 }
 
 /**
- * Parsea y decodifica el token desde el header Authorization
- * Si el proceso falla, el error deberá ser proesado externamente
- * @param {string} authorization 
- * @returns el token decodificado o false
+ * Middleware verifica el rol de usuario requerido o arroja un 403
+ * @param {array} roles Los roles a verificar
  */
-function get_decoded_token(authorization) {
-    const token = parse_token(authorization);
-    if (!token)
-        return false;
+function required_role(roles) {
+    return (req, res, next) => {
+        const decoded_token = get_decoded_token(req.headers?.authorization);
 
-    return decode(token);
+        if (!roles.includes(decoded_token.role))
+            return next(create_error(403, 'Forbidden.'));
+        next();
+    };
 }
 
 module.exports = {
     auth_verify: auth_verify,
     decode: decode,
     get_decoded_token: get_decoded_token,
-    parse_token: parse_token
+    parse_token: parse_token,
+    required_role: required_role
 };

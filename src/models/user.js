@@ -29,6 +29,22 @@ module.exports = (sequelize, DataTypes) => {
                     as: 'projects'
                 }
             );
+            // Ejecuta muchas tareas
+            this.hasMany(
+                models.Task,
+                {
+                    foreignKey: 'userExecutor',
+                    as: 'tasks'
+                }
+            );
+            // Es autor de muchas tareas
+            this.hasMany(
+                models.Task,
+                {
+                    foreignKey: 'userAuthor',
+                    as: 'authoredTasks'
+                }
+            );
         }
     }
     User.init({
