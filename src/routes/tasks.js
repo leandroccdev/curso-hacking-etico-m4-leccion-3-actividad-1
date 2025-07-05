@@ -27,6 +27,21 @@ const {
 const IS_DEV = process.env.NODE_ENV === 'development';
 
 /**
+ * Permite listar los estados de las  tareas
+ */
+router.get(
+    '/status',
+    auth_verify,
+     (req, res, next) => {
+            return res.status(200).json({
+                project: {
+                    status: task_status
+                }
+            });
+        }
+);
+
+/**
  * Permite crear una nueva tarea.
  * 
  * Objeto esperado
