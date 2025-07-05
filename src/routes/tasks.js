@@ -354,7 +354,114 @@ router.put(
             res.status(204).send();
         } catch (err) {
             if (IS_DEV)
-                next(create_error(err.status, err.message));
+                return next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
+        }
+    }
+);
+
+/**
+ * Gestiona la edición de una tarea
+ * 
+ * La edición es posible en los siguientes estados
+ * - open: 1
+ * El cambio de proyecto solo es posible cuando el proyecto tiene los siguientes estados:
+ * - proposal: 1
+ * - planning: 2
+ * Objeto esperado
+ * {
+ *      "title": string,
+ *      "description": string,
+ *      "projectId": integer,
+ *      "status": string
+ * }
+ * 
+ * El campo userExecutor se edita vía put /task/:id/user
+ * El campo progress se edita via put /task/:id/progress
+ * El campo userAuthor no es editable
+ */
+router.put(
+    '/:id',
+    detect_authorization_xss,
+    detect_body_xss,
+    auth_verify,
+    required_role([
+        user_roles.administrator,
+        user_roles.editor
+    ]),
+     async (req, res, next) => {
+        try {
+            const task_id = req.params.id;
+            let {
+                title,
+                description,
+                projectId,
+                status
+            } = req.body;
+
+            // Detectar XSS en task_id
+            if (task_id !== escape_html(task_id))
+                return next(create_error(500, "The request couldn't be processed."));
+
+            // Campos vacíos
+            if (!title || !description || !projectId || !status)
+                return next(create_error(400, 'All fields are required.'));
+
+            // Sanitizar campos
+            title = escape_html(title);
+            description = escape_html(description);
+            projectId = escape_html(projectId);
+            status = escape_html(status);
+
+            // Buscar proyecto
+            const project = await db.Project.findByPk(projectId, {
+                where: {
+                    isDeleted: false
+                }
+            });
+            // No existe
+            if (!project)
+                return next(create_error(404, "Project was not found."));
+
+            // Buscar tarea
+            const task = await db.Task.findByPk(task_id, {
+                where: {
+                    isDeleted: false
+                }
+            });
+            // No existe
+            if (!task)
+                return next(create_error(404, "Task was not found."));
+
+            // Verificar estado de la tarea
+            if (task.status !== task_status.open)
+                return next(create_error(409, "The task doesn't receive any modifications."));
+
+            // Verificar si hay cambio de proyecto
+            if (task.projectId !== projectId) {
+                // Verificar si proyecto objetivo recive tareas
+                const edit_allowed_in = [
+                    project_status.proposal,
+                    project_status.planning
+                ];
+                if (!edit_allowed_in.includes(project.status))
+                    return next(create_error(409, "The project doesn't receive any more tasks."));
+            }
+
+            // Proceder con el update
+            await task.update({
+                title:       title,
+                description: description,
+                projectId:   projectId,
+                status:      status
+            });
+            
+            // Modificación exitosa
+            return res.status(204).send();
+        } catch (err) {
+            if (IS_DEV)
+                return next(create_error(err.status, err.message));
             else
                 return next(create_error(500, "The request couldn't be processed."));
         }
