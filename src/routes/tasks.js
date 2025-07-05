@@ -31,7 +31,7 @@ const IS_DEV = process.env.NODE_ENV === 'development';
  */
 router.get(
     '/status',
-    detect_authorization_xss
+    detect_authorization_xss,
     auth_verify,
      (req, res, next) => {
             return res.status(200).json({
@@ -196,7 +196,7 @@ router.post(
             });
             // No se encontró el usuario
             if (!user)
-                return next(create_error(500, "The request couldn't be processed."))
+                return next(create_error(500, "The request couldn't be processed."));
 
             // Creación de la tarea
             const task = await db.Task.create({
@@ -276,6 +276,70 @@ router.delete(
             task.destroy();
 
             return res.status(204).send();
+        } catch (err) {
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
+        }
+    }
+);
+
+/**
+ * Permite asignar/reasignar un usuario a una tarea
+ * 
+ * Objeto esperado
+ * {
+ *      "userId": integer
+ * }
+ */
+router.put(
+    '/:id/user',
+    detect_authorization_xss,
+    detect_body_xss,
+    auth_verify,
+    required_role([
+        user_roles.administrator,
+        user_roles.editor
+    ]),
+    async (req, res, next) => {
+        try {
+            let id = req.params.id;
+            let user_id = req.body.userId;
+
+            // No viene userId
+            if (!user_id)
+                return next(create_error(400, "The field 'userId' is required."));
+
+            // Verificar XSS en id
+            if (id !== escape_html(id))
+                next(create_error(500, "The request couldn't be processed."));
+
+            // Sanitizar user Id
+            user_id  = escape_html(user_id);
+
+            // Verifica que la tarea exista
+            const task = await db.Task.findByPk(id, {
+                where: {
+                    isDeleted: false
+                }
+            });
+            // Tarea no existe
+            if (!task)
+                next(create_error(404, 'Task was not found'));
+
+            // Buscar el usuario
+            const user = await db.User.findByPk(user_id);
+            // No se encontró el usuario
+            if (!user)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            // Asignar la tarea al usuario
+            task.userExecutor = user_id;
+            await task.save();
+
+            // Asignación exitosa
+            res.status(204).send();
         } catch (err) {
             if (IS_DEV)
                 next(create_error(err.status, err.message));
