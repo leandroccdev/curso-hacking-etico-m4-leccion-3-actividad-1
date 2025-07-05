@@ -377,6 +377,9 @@ router.put(
  *      "status": string
  * }
  * 
+ * Restricciones:
+ * - El usuario debe ser el author del proyecto y de la tarea
+ * 
  * El campo userExecutor se edita vía put /task/:id/user
  * El campo progress se edita via put /task/:id/progress
  * El campo userAuthor no es editable
@@ -414,10 +417,29 @@ router.put(
             projectId = escape_html(projectId);
             status = escape_html(status);
 
-            // Buscar proyecto
-            const project = await db.Project.findByPk(projectId, {
+            // Decodifica el token
+            const decoded_token = get_decoded_token(req.headers.authorization);
+
+            // Buscar usuario de la sesión
+            // Consulta el id del usuario
+            const user = await db.User.findOne({
                 where: {
-                    isDeleted: false
+                    username:decoded_token.username
+                }
+            });
+            // No se encontró el usuario
+            if (!user)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            // Buscar proyecto
+            devlog('Buscar proyecto');
+            const project = await db.Project.findOne({
+                where: {
+                    [Op.and]: [
+                        { id: projectId },
+                        { isDeleted: false },
+                        { userOwner: user.id }
+                    ]
                 }
             });
             // No existe
@@ -425,9 +447,12 @@ router.put(
                 return next(create_error(404, "Project was not found."));
 
             // Buscar tarea
-            const task = await db.Task.findByPk(task_id, {
+            devlog('Buscar tarea');
+            const task = await db.Task.findOne({
                 where: {
-                    isDeleted: false
+                    id: task_id,
+                    isDeleted: false,
+                    userAuthor: user.id
                 }
             });
             // No existe
@@ -456,7 +481,7 @@ router.put(
                 projectId:   projectId,
                 status:      status
             });
-            
+
             // Modificación exitosa
             return res.status(204).send();
         } catch (err) {
