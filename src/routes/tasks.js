@@ -42,6 +42,99 @@ router.get(
 );
 
 /**
+ * Lista todas las tareas que el usuario pueda visualizar
+ */
+router.get(
+    '/',
+    auth_verify,
+    required_role([
+        user_roles.administrator,
+        user_roles.editor,
+        user_roles.normalUser
+    ]),
+    async (req, res, next) => {
+        try {
+            // Decodifica el token
+            const decoded_token = get_decoded_token(req.headers.authorization);
+
+            // Consulta el id del usuario
+            const user = await db.User.findOne({
+                where: {
+                    username:decoded_token.username
+                }
+            });
+            // No se encontró el usuario
+            if (!user)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            // Consulta las tareas de acuerdo a la id del usuario
+            let tasks = null;
+
+            // Admin ve todas las tareas
+            if (user.role === user_roles.administrator) {
+                devlog('Listing as admin');
+                tasks = await db.Task.findAll({
+                    attributes: [
+                        'id',
+                        'title',
+                        'description',
+                        'progress',
+                        'projectId',
+                        'userAuthor',
+                        'userExecutor',
+                        'status'
+                    ],
+                    where: {
+                        isDeleted: false
+                    }
+                });
+            }
+
+            // Listar como otro usuario
+            else {
+                devlog('Listing as another user');
+                tasks = await db.Task.findAll({
+                    attributes: [
+                        'id',
+                        'title',
+                        'description',
+                        'progress',
+                        'projectId',
+                        'userAuthor',
+                        'userExecutor',
+                        'status'
+                    ],
+                    where: {
+                        isDeleted: false,
+                        [Op.or]: [
+                            {
+                                userAuthor: user.id,
+                            },
+                            {
+                                userExecutor: user.id
+                            }
+                        ]
+                    }
+                });
+            }
+
+            // No se pudieron obtener las tareas
+            if(!tasks)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            return res.status(200).json({
+                tasks: tasks
+            });
+        } catch (err) {
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
+        }
+    }
+);
+
+/**
  * Permite crear una nueva tarea.
  * 
  * Objeto esperado
