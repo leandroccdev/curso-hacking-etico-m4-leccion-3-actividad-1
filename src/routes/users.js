@@ -82,8 +82,10 @@ router.post('/register', detect_body_xss, sanitize_body, async (req, res, next) 
             }
         });
     } catch (err) {
-        deverr(err);
-        return next(create_error(500, "The request couldn't be processed."));
+        if (IS_DEV)
+            next(create_error(err.status, err.message));
+        else
+            return next(create_error(500, "The request couldn't be processed."));
     }
 });
 
@@ -184,8 +186,10 @@ router.post('/auth', detect_body_xss, sanitize_body, async (req, res, next) => {
             }
         });
     } catch (err) {
-        deverr(err);
-        return next(auth_err);
+        if (IS_DEV)
+            next(create_error(err.status, err.message));
+        else
+            return next(create_error(500, "The request couldn't be processed."));
     }
 });
 
@@ -227,8 +231,10 @@ router.get(
             // Logout exitoso
             res.status(204).json();
         } catch (err) {
-            deverr(err);
-            return next(create_error(500, "The request couldn't be processed."));
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
         }
     }
 );

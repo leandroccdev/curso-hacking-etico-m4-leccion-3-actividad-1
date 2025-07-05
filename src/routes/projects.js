@@ -1,15 +1,11 @@
 require('dotenv').config();
 const express = require('express');
-const bcrypt = require('bcrypt');
 const create_error = require('http-errors');
 const escape_html = require('escape-html');
-const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
 const db = require('../models/index');
 const { devlog, deverr } = require('../util/devlog');
-const { get_now } = require('../util/datetime');
 const {
     detect_authorization_xss,
     detect_body_xss,
@@ -23,6 +19,8 @@ const {
     get_decoded_token,
     required_role
 } = require('../util/jwt');
+
+const IS_DEV = process.env.NODE_ENV === 'development';
 
 /**
  * Lista los estados posibles para un proyecto.
@@ -95,7 +93,10 @@ router.get(
                 projects: projects
             });
         } catch (err) {
-            next(create_error(err.status, err.message));
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
         }
     }
 );
@@ -171,7 +172,10 @@ router.post(
                 }
             });
         } catch (err) {
-            next(create_error(err.status, err.message));
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
         }
     }
 );
@@ -223,7 +227,10 @@ router.put(
 
             res.status(200).json();
         } catch (err) {
-            next(create_error(err.status, err.message));
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
         }
     }
 );
@@ -240,44 +247,52 @@ router.delete(
         user_roles.administrator
     ]),
     async (req, res, next) => {
-        let id = req.params.id;
+        try {
 
-        // Detectar XSS
-        if (escape_html(id) !== id)
-            return next(create_error(500, "The request couldn't be processed."));
+            let id = req.params.id;
 
-        // Sanitizar id
-        id = escape_html(id);
+            // Detectar XSS
+            if (escape_html(id) !== id)
+                return next(create_error(500, "The request couldn't be processed."));
 
-        // Verificar si el proyecto existe
-        const project = await db.Project.findByPk(id, {
-            where: {
-                isDeleted: false
-            }
-        });
-        // No existe
-        if (!project)
-            return next(create_error(404, 'Resource not found'));
-
-        // Verificar si tienes tareas no cerradas
-        const tasks = await db.Task.findAll({
-            where: {
-                projectId: id,
-                isDeleted: false,
-                status: {
-                    [Op.ne]: task_status.closed,
-                    [Op.ne]: task_status.cancelled
+            // Sanitizar id
+            id = escape_html(id);
+    
+            // Verificar si el proyecto existe
+            const project = await db.Project.findByPk(id, {
+                where: {
+                    isDeleted: false
                 }
-            }
-        });
-        // Existen tareas activas en el proyecto
-        if (tasks.length > 0)
-            return next(create_error(409, 'Cannot delete a project with active tasks.'))
+            });
+            // No existe
+            if (!project)
+                return next(create_error(404, 'Resource not found'));
+    
+            // Verificar si tienes tareas no cerradas
+            const tasks = await db.Task.findAll({
+                where: {
+                    projectId: id,
+                    isDeleted: false,
+                    status: {
+                        [Op.ne]: task_status.closed,
+                        [Op.ne]: task_status.cancelled
+                    }
+                }
+            });
+            // Existen tareas activas en el proyecto
+            if (tasks.length > 0)
+                return next(create_error(409, 'Cannot delete a project with active tasks.'))
+    
+            // Realiza la eliminación
+            await project.destroy();
 
-        // Realiza la eliminación
-        await project.destroy();
-
-        res.status(204).send();
+            res.status(204).send();
+        } catch (err) {
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
+        }
     }
 );
 
