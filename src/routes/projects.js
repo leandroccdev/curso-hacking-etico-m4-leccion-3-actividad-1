@@ -45,7 +45,8 @@ router.get(
     auth_verify,
     required_role([
         user_roles.administrator,
-        user_roles.editor
+        user_roles.editor,
+        user_roles.normalUser
     ]),
     async (req, res, next) => {
         try {
