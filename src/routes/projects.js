@@ -188,14 +188,13 @@ router.post(
  * 
  * Objeto esperado:
  * {
- *      "id": integer, // campo requerido
  *      "title": string, // opcional
  *      "description": string, // opcional
  *      status: integer // opcional
  * }
  */
 router.put(
-    '/',
+    '/:id',
     detect_authorization_xss,
     detect_body_xss,
     auth_verify,
@@ -206,16 +205,34 @@ router.put(
     sanitize_body,
     async (req, res, next) => {
         try {
-            const {id, title, description, status} = req.body;
+            const {title, description, status} = req.body;
+            let project_id = req.params.id;
 
-            if (!id)
-                return next(create_error(400, "'id' field is required."));
+            // Valida XSS en id
+            if (project_id !== escape_html(project_id))
+                return next(create_error(500, "The request couldn't be processed."));
 
             // Obtiene el token decodificado
             const decoded_token = get_decoded_token(req.headers?.authorization);
 
+            // Buscar usuario de la sesión
+            // Consulta el id del usuario
+            const user = await db.User.findOne({
+                where: {
+                    username:decoded_token.username
+                }
+            });
+            // No se encontró el usuario
+            if (!user)
+                return next(create_error(500, "The request couldn't be processed."));
+
             // Obtiene el proyecto para realizar la edición
-            const project = await db.Project.findByPk(id);
+            const project = await db.Project.findOne({
+                where: {
+                    id: project_id,
+                    userOwner: user.id
+                }
+            });
 
             // No se encontró el proyecto
             if (!project)
