@@ -10,7 +10,7 @@ function detect_body_xss(req, res, next) {
         const field = req.body[k].toString();
 
         if (escaped_field !== field)
-            return next(create_error(400, "The request couldn't be processed."))
+            return next(create_error(500, "The request couldn't be processed."))
     }
     next();
 }
@@ -22,7 +22,7 @@ function detect_authorization_xss(req, res, next) {
     const authorization = req.headers?.authorization || null;
 
     if (authorization && escape_html(authorization) !== authorization)
-        return next(create_error(400, "The request couldn't be processed."));
+        return next(create_error(500, "The request couldn't be processed."));
 
     next();
 }
