@@ -27,6 +27,7 @@ const IS_DEV = process.env.NODE_ENV === 'development';
  */
 router.get(
     '/status',
+    detect_authorization_xss,
     auth_verify,
     (req, res, next) => {
         return res.status(200).json({
@@ -42,6 +43,7 @@ router.get(
  */
 router.get(
     '/',
+    detect_authorization_xss,
     auth_verify,
     required_role([
         user_roles.administrator,
