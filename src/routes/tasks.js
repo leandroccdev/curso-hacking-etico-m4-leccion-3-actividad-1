@@ -393,7 +393,7 @@ router.put(
         user_roles.administrator,
         user_roles.editor
     ]),
-     async (req, res, next) => {
+    async (req, res, next) => {
         try {
             const task_id = req.params.id;
             let {
@@ -483,6 +483,104 @@ router.put(
             });
 
             // Modificación exitosa
+            return res.status(204).send();
+        } catch (err) {
+            if (IS_DEV)
+                return next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
+        }
+    }
+);
+
+/**
+ * Permite la edición del progreso de una tarea
+ * 
+ * Objeto esperado
+ * {
+ *      "progress": float
+ * }
+ * 
+ * El progreso se puede setear en los siguientes estados de la tarea
+ * - in-progress: 2
+ */
+router.put(
+    '/:id/progress',
+    detect_authorization_xss,
+    detect_body_xss,
+    auth_verify,
+    required_role([
+        user_roles.administrator,
+        user_roles.editor
+    ]),
+    async (req, res, next) => {
+        try {
+            const task_id = req.params.id;
+            let progress = req.body.progress;
+
+            // Detectar XSS en task_id
+            if (task_id !== escape_html(task_id))
+                return next(create_error(500, "The request couldn't be processed."));
+
+            // Campos vacíos
+            if (!progress)
+                return next(create_error(400, "Field 'progress' is required."));
+
+            // Sanitizar campos
+            progress = escape_html(progress);
+
+            // Decodifica el token
+            const decoded_token = get_decoded_token(req.headers.authorization);
+
+            // Buscar usuario de la sesión
+            const user = await db.User.findOne({
+                where: {
+                    username:decoded_token.username
+                }
+            });
+            // No se encontró el usuario
+            if (!user)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            // Buscar tarea
+            devlog('Buscar tarea');
+            let task = null;
+            if (user.role === user_roles.administrator) {
+                devlog("As admin");
+                task = await db.Task.findOne({
+                    where: {
+                        id: task_id,
+                        isDeleted: false
+                    }
+                });
+            }
+            else {
+                devlog("as editor");
+                task = await db.Task.findOne({
+                    where: {
+                        id: task_id,
+                        isDeleted: false,
+                        userAuthor: user.id
+                    }
+                });
+            }
+            // No existe
+            if (!task)
+                return next(create_error(404, "Task was not found."));
+
+            // Verificar estado de la tarea
+            if (task.status === task_status.open)
+                return next(create_error(409, "The task is not in progress yet."));
+
+            if (task.status !== task_status.in_progress)
+                return next(create_error(409, "The task is not in progress anymore."));
+
+            // Actualiza el progreso de la tarea
+            await task.update({
+                progress: progress
+            });
+
+            // Actualización exitosa
             return res.status(204).send();
         } catch (err) {
             if (IS_DEV)
