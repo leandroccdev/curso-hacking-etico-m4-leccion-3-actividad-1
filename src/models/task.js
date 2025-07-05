@@ -54,7 +54,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER
         },
         userExecutor: {
-            allowNull: false,
+            allowNull: true,
             type: DataTypes.INTEGER
         },
         status: {

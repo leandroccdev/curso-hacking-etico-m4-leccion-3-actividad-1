@@ -36,7 +36,7 @@ module.exports = {
             },
             // Usuario quien desarrolla la tarea
             userExecutor: {
-                allowNull: false,
+                allowNull: true,
                 type: Sequelize.INTEGER
             },
             /**
