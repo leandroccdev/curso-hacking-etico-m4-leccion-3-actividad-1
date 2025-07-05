@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const create_error = require('http-errors');
 const escape_html = require('escape-html');
 const jwt = require('jsonwebtoken');
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../models/index');
@@ -23,6 +23,8 @@ const {
     get_decoded_token,
     required_role
 } = require('../util/jwt');
+
+const IS_DEV = process.env.NODE_ENV === 'development';
 
 /**
  * Permite crear una nueva tarea.
@@ -113,7 +115,61 @@ router.post(
                 }
             });
         } catch (err) {
-            next(create_error(err.status, err.message));
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
+        }
+    }
+);
+
+/**
+ * Gestiona la eliminación de una tarea
+ * La eliminación es posible en los siguientes estados:
+ * - open: 1
+ * - cancelled: 6
+ * Nota: solo para administradores.
+ */
+router.delete(
+    '/:id',
+    auth_verify,
+    required_role([
+        user_roles.administrator
+    ]),
+    async (req, res, next) => {
+        try {
+            let id = req.params.id;
+
+            // Detectar XSS
+            if (escape_html(id) !== id)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            // Sanitizar id
+            id = escape_html(id);
+
+            // Verificar is la tarea existe
+            const task = await db.Task.findByPk(id, {
+                where: {
+                    isDeleted: false
+                }
+            });
+            // No existe
+            if (!task)
+                return next(create_error(404, 'Resource not found'));
+
+            // Verificar estado de tarea
+            if (task.status !== task_status.open && task.status !== task_status.cancelled)
+                return next(create_error(409, "The task can't be deleted after started."));
+
+            // Eliminar tarea
+            task.destroy();
+
+            return res.status(204).send();
+        } catch (err) {
+            if (IS_DEV)
+                next(create_error(err.status, err.message));
+            else
+                return next(create_error(500, "The request couldn't be processed."));
         }
     }
 );

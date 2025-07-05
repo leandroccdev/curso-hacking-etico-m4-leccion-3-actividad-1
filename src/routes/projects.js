@@ -248,7 +248,6 @@ router.delete(
     ]),
     async (req, res, next) => {
         try {
-
             let id = req.params.id;
 
             // Detectar XSS
@@ -267,7 +266,7 @@ router.delete(
             // No existe
             if (!project)
                 return next(create_error(404, 'Resource not found'));
-    
+
             // Verificar si tienes tareas no cerradas
             const tasks = await db.Task.findAll({
                 where: {
