@@ -288,6 +288,8 @@ router.delete(
 /**
  * Permite asignar/reasignar un usuario a una tarea
  * 
+ * La Asignación solo es posible en los siguientes estados:
+ * - open: 1
  * Objeto esperado
  * {
  *      "userId": integer
@@ -313,7 +315,7 @@ router.put(
 
             // Verificar XSS en id
             if (id !== escape_html(id))
-                next(create_error(500, "The request couldn't be processed."));
+                return next(create_error(500, "The request couldn't be processed."));
 
             // Sanitizar user Id
             user_id  = escape_html(user_id);
@@ -326,7 +328,17 @@ router.put(
             });
             // Tarea no existe
             if (!task)
-                next(create_error(404, 'Task was not found'));
+                return next(create_error(404, 'Task was not found'));
+
+            // Verificar el estado de la tarea
+
+            // No recibe asignaciones cuando ha sido cancelada
+            if (task.status === task_status.cancelled)
+                return next(create_error(409, "The task was cancelled."))
+
+            // No recibe reasignaciones luego de ser asignada
+            if (task.status !== task_status.open)
+                return next(create_error(409, "The task can't receive an executor reasignation after starting."));
 
             // Buscar el usuario
             const user = await db.User.findByPk(user_id);
