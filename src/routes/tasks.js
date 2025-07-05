@@ -129,7 +129,7 @@ router.get(
             });
         } catch (err) {
             if (IS_DEV)
-                next(create_error(err.status, err.message));
+                return next(create_error(err.status, err.message));
             else
                 return next(create_error(500, "The request couldn't be processed."));
         }
@@ -226,7 +226,7 @@ router.post(
             });
         } catch (err) {
             if (IS_DEV)
-                next(create_error(err.status, err.message));
+                return next(create_error(err.status, err.message));
             else
                 return next(create_error(500, "The request couldn't be processed."));
         }
@@ -278,7 +278,7 @@ router.delete(
             return res.status(204).send();
         } catch (err) {
             if (IS_DEV)
-                next(create_error(err.status, err.message));
+                return next(create_error(err.status, err.message));
             else
                 return next(create_error(500, "The request couldn't be processed."));
         }
