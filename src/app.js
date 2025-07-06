@@ -1,6 +1,5 @@
 const create_error = require('http-errors');
 const express = require('express');
-const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
 const usersRouter = require('./routes/users');
@@ -11,7 +10,6 @@ var app = express();
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(cookieParser());
 
 app.use('/user', usersRouter);
 app.use('/project', projectsRouter);
