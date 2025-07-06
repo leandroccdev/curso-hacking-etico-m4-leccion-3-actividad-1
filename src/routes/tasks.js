@@ -320,9 +320,24 @@ router.put(
             // Sanitizar user Id
             user_id  = escape_html(user_id);
 
-            // Verifica que la tarea exista
-            const task = await db.Task.findByPk(id, {
+            // Decodifica el token para obtener el usuario
+            const decoded_token = get_decoded_token(req.headers?.authorization);
+
+            // Obtiene el usuario
+            const session_user = await db.User.findOne({
                 where: {
+                    username: decoded_token.username
+                }
+            });
+            // No se encontró el usuario
+            if (!session_user)
+                return next(create_error(500, "The request couldn't be processed."));
+
+            // Verifica que la tarea exista
+            const task = await db.Task.findOne({
+                where: {
+                    id: id,
+                    userAuthor: session_user.id,
                     isDeleted: false
                 }
             });
