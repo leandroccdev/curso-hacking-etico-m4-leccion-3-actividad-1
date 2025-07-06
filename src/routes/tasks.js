@@ -169,8 +169,37 @@ router.post(
             if (!title || !description || !projectId)
                 return next(create_error(400, 'All fields are required.'));
 
+            // Decodifica el token para obtener el usuario de sessión
+            const decoded_token = get_decoded_token(req.headers?.authorization);
+
+            // Obtiene el usuario
+            const user = await db.User.findOne({
+                where: {
+                    username: decoded_token.username
+                }
+            });
+            // No se encontró el usuario
+            if (!user)
+                return next(create_error(500, "The request couldn't be processed."));
+
             // Busca el proyecto
-            const project = await db.Project.findByPk(projectId);
+            let project = null;
+
+            // Como administrador
+            if (user.role === user_roles.administrator) {
+                devlog('as admin');
+                project = await db.Project.findByPk(projectId);
+
+            // Como un usuario editor
+            } else {
+                devlog('as editor');
+                project = await db.Project.findOne({
+                    where: {
+                        id: projectId,
+                        userOwner: user.id // verifica que el proyecto pertenezca al usuario de sesión
+                    }
+                });
+            }
             // No se encontró el proyecto
             if (!project)
                 return next(create_error(404, 'Project not found.'));
@@ -184,19 +213,6 @@ router.post(
             if (project_status.finished === project.status ||
                 project_status.cancelled === project.status)
                 return next(create_error(409, "The project doesn't accept more tasks."));
-
-            // Decodifica el token para obtener el usuario
-            const decoded_token = get_decoded_token(req.headers?.authorization);
-
-            // Obtiene el usuario
-            const user = await db.User.findOne({
-                where: {
-                    username: decoded_token.username
-                }
-            });
-            // No se encontró el usuario
-            if (!user)
-                return next(create_error(500, "The request couldn't be processed."));
 
             // Creación de la tarea
             const task = await db.Task.create({
